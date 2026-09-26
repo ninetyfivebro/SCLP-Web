@@ -96,12 +96,12 @@ function filter_towers() {
     let place = $("#game-filter").val();
     let player = checked_player();
     let done = new Set(player ? player.completions : []);
-    let allowed = [8, 9, 10, 11, 12, 13].filter(i => $("#diff-" + i).prop("checked"));
+    let allowed = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].filter(i => $("#diff-" + i).prop("checked"));
 
     filter_rows("towers-table", row => {
         let {id, name, abbr, diff, places} = row.dataset;
         row.querySelector("button").className = done.has(+id) ? "tower-link-done" : "tower-link";
-        return (name.includes(search) || abbr.includes(search)) && allowed.includes(+diff) && (!place || places.split(",").includes(place));
+        return (name.includes(search) || abbr.includes(search)) && (!place || places.split(",").includes(place));
     });
 }
 
@@ -318,7 +318,7 @@ function open_player(name, rank) {
     $("#player-level").html(level_text(player.total_xp));
     $("#player-rank").html(`#${rank || player.rank}`);
 
-    let diff_rows = [8, 9, 10, 11, 12, 13].map(d => {
+    let diff_rows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map(d => {
         let diff = diff_name(d * 100);
         let got = counts[diff] || 0;
         let total = diff_totals[diff] || 0;

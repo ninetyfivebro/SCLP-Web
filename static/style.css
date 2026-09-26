@@ -328,6 +328,34 @@ p {
     margin-top: 10px;
 }
 
+.Easy {
+    color: #00ff15;
+}
+
+.Medium {
+    color: #eeff00;
+}
+
+.Hard {
+    color: #ff7300;
+}
+
+.Difficult {
+    color: #e22828;
+}
+
+.Challenging {
+    color: #5f171d;
+}
+
+.Intense {
+    color: #272327;
+}
+
+.Remorseless {
+    color: #ff00f2;
+}
+
 .Insane {
     color: #003FFF;
 }
@@ -354,6 +382,67 @@ p {
 
 .Nil, .quality-x {
     color: #797981;
+}
+
+.eRRoR {
+    font-weight: 800; /* Highly recommended for gradients */
+    color: #f43f5e; /* Fallback color for older browsers */
+    background-image: -webkit-linear-gradient(180deg, #ff0a0a 0%, #24c146 50%, #2434c1 100%);
+    background-image: linear-gradient(180deg, #ff0a0a 0%, #24c146 50%, #2434c1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.Bullshit {
+    font-weight: 800; /* Highly recommended for gradients */
+    color: #f43f5e; /* Fallback color for older browsers */
+    background-image: -webkit-linear-gradient(180deg, #f43f5e 0%, #c12424 100%);
+    background-image: linear-gradient(180deg, #f43f5e 0%, #c12424 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.OMEGASUPERBULLSHIT {
+    font-size: 2rem;
+    color: #85693d;
+    font-family: "Times New Roman", Gadget, sans-serif;
+    text-shadow: 0px 0px 0 rgb(128,100,56),
+                 1px 1px 0 rgb(123,95,51),
+                 2px 2px 0 rgb(118,90,46),
+                 3px 3px 0 rgb(113,85,41),
+                 4px 4px 0 rgb(108,80,36),
+                 5px 5px 0 rgb(103,75,31),
+                 6px 6px 0 rgb(98,70,26),
+                 7px 7px 0 rgb(93,65,21),
+                 8px 8px 0 rgb(88,60,16),
+                 9px 9px 0 rgb(83,55,11),
+                 10px 10px  0 rgb(78,50,6),
+                 11px 11px 10px rgba(0,0,0,0),
+                 11px 11px 1px rgba(0,0,0,0.5),
+                 0px 0px 10px rgba(0,0,0,.2);
+}
+
+.AlephNull {
+    font-family: "Georgia", serif;
+    font-size: 1rem;
+    font-weight: 1000; /* Highly recommended for gradients */
+    color: #f43f5e; /* Fallback color for older browsers */
+    background-image: -webkit-linear-gradient(180deg, #000000 0%, #c12424 100%);
+    background-image: linear-gradient(180deg, #000000 0%, #c12424 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.STUPID {
+    font-family: "Arial Black", serif;
+    font-size: 3rem;
+    background-image: url("https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpng.pngtree.com%2Fthumb_back%2Ffh260%2Fbackground%2F20230524%2Fpngtree-an-image-of-a-burning-flame-in-a-lava-pit-image_2685517.jpg&f=1&nofb=1&ipt=7cb363c609ca8d2fae18adb8c81e4ac595a89b15ce3e3db656e4ba89aca012bb");
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .owners {
