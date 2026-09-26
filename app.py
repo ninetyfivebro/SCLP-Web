@@ -14,7 +14,7 @@ load_dotenv()
 app = Flask(__name__)
 
 def get_data(r):
-    url = f"https://sheets.googleapis.com/v4/spreadsheets/1KVWABheZisS9XL0qN8vy153OWVDMt4o94uds3ef7tdA/values/{r}?key=AIzaSyBqO_8-kflg_Fsz_KeUmPQJp0AfIlLg9YM" # will set up a db for a lot of this stuff later
+    url = f"https://sheets.googleapis.com/v4/spreadsheets/1PCndMCuQkslsWITs19Q2YaLFa16XnpUZzts4npzCjtE/values/{r}?key={os.getenv('GOOGLE_SHEETS_API_KEY')}" # will set up a db for a lot of this stuff later
     values = requests.get(url).json().get("values", [])
     if len(values) < 2:
         return []
@@ -32,8 +32,8 @@ def get_data(r):
         data.append(item)
     return data
 
-diffs = [(100, "Effortless"), (200, "Easy"), (300, "Medium"), (400, "Hard"), (500, "Difficult"), (600, "Challenging"), (700, "Intense"), (800, "Remorseless"), (900, "Insane"), (1000, "Extreme"), (1100, "Terrifying"), (1200, "Catastrophic"), (1300, "Horrific"), (1400, "Unreal")]
-player_sorts = [("xp", "Level/XP"), ("completions", "SCs Beaten"), ("hardest", "Hardest Tower")] + [(f"most-{name.lower()}", f"{name} Towers") for limit, name in diffs]
+diffs = [(900, "Insane"), (1000, "Extreme"), (1100, "Terrifying"), (1200, "Catastrophic"), (1300, "Horrific"), (1400, "Unreal"), (99999, "Nil")]
+player_sorts = [("xp", "Level/XP"), ("completions", "SCs Beaten"), ("hardest", "Hardest Tower")] + [(f"most-{name.lower()}", f"{name} Towers") for limit, name in diffs[:6]]
 
 def diff_name(d):
     return next(name for limit, name in diffs if d < limit)
