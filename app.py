@@ -14,7 +14,7 @@ load_dotenv()
 app = Flask(__name__)
 
 def get_data(r):
-    url = f"https://sheets.googleapis.com/v4/spreadsheets/1PCndMCuQkslsWITs19Q2YaLFa16XnpUZzts4npzCjtE/values/{r}?key={os.getenv('GOOGLE_SHEETS_API_KEY')}" # will set up a db for a lot of this stuff later
+    url = f"https://sheets.googleapis.com/v4/spreadsheets/1KVWABheZisS9XL0qN8vy153OWVDMt4o94uds3ef7tdA/values/{r}?key=AIzaSyBqO_8-kflg_Fsz_KeUmPQJp0AfIlLg9YM" # will set up a db for a lot of this stuff later
     values = requests.get(url).json().get("values", [])
     if len(values) < 2:
         return []
