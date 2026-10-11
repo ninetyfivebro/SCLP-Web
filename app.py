@@ -1,4 +1,4 @@
-from flask import Flask, render_template, make_response, jsonify
+from flask import Flask, render_template, make_response, jsonify, request
 from dotenv import load_dotenv
 import os
 import math
@@ -57,6 +57,7 @@ def parse_tower(tower):
     tower["difficulty"] = int(tower["difficulty"])
     tower["xp"] = math.floor((3 ** ((tower["difficulty"] - 800) / 100)) * 100)
     parts = [part.strip() for part in tower["places"].split(";") if part.strip()]
+    tower["creators"] = [c.strip() for c in tower["creators"].split(",") if c.strip()]
     tower["places"] = [p.split(",") for p in parts]
 
     if tower["game"] == "":
@@ -91,7 +92,7 @@ def parse_packs(raw, tower_by_id):
 
 def build():
     with ThreadPoolExecutor(max_workers=4) as pool:
-        players, towers, games, countries = pool.map(get_data, ["comps!A:C", "towers!A:G", "games!A:C", "nationalities!A:B"])
+        players, towers, games, countries = pool.map(get_data, ["comps!A:C", "towers!A:J", "games!A:C", "nationalities!A:B"])
 
     flags = {}
     for c in countries:
@@ -202,10 +203,40 @@ for entry in staff:
 
 scotw_points = get_data("scotwpoints!A:B")
 
+def level_of(xp):
+    level = 0
+    need = 175
+    while xp >= need:
+        xp -= need
+        level += 1
+        need = 150 + 25 * (level + 1) ** 2
+    return level
+
+def page_meta():
+    meta = {"title": "SCLP Official", "description": "Soul Crushing Leaderboard Project"}
+    name = request.args.get("u", "").lower()
+    tower_id = request.args.get("t", "")
+    pack_id = request.args.get("pk", "")
+
+    player = next((p for p in data["players"] if p["username"].lower() == name), None) if name else None
+    tower = next((t for t in data["towers"] if str(t["id"]) == tower_id), None) if tower_id else None
+    pack = next((p for p in data["packs"] if p["id"] == pack_id), None) if pack_id else None
+
+    if player:
+        meta["title"] = f'{player["username"]} - SCLP'
+        meta["description"] = f'Rank #{player["rank"]} | Level {level_of(player["total_xp"])} | {player["total_xp"]:,} XP | {len(player["completions"])} SCs beaten'
+    elif tower:
+        meta["title"] = f'{tower["name"]} - SCLP'
+        meta["description"] = f'{diff_name(tower["difficulty"])} ({tower["difficulty"] / 100:g}) | Rank #{tower["rank"]} | {len(data["victors_by_tower"][tower["id"]])} victors'
+    elif pack:
+        meta["title"] = f'{pack["name"]} - SCLP'
+        meta["description"] = f'{len(pack["towers"])} towers | {pack["xp"]:,} bonus XP | {len(data["pack_victors"][pack["id"]])} victors'
+    return meta
+
 @app.route("/")
 def home():
     js = {**data, "cool_members": cool_members, "staff": staff, "roles": roles, "scotw_points": scotw_points, "diffs": diffs}
-    return render_template("index.html", js=js, diffs=diffs, player_sorts=player_sorts)
+    return render_template("index.html", js=js, diffs=diffs, player_sorts=player_sorts, meta=page_meta())
 
 def next_scotw(after):
     local = after.astimezone(ZoneInfo("America/New_York"))

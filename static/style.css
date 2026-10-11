@@ -41,6 +41,21 @@ span {
     text-align: right;
 }
 
+#tower-creator {
+    display: inline;
+    text-align: left;
+    line-height: calc(1.2em + 3px);
+}
+
+.link-button {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-decoration: underline;
+}
+
 p {
     margin: 0;
 }
@@ -238,6 +253,26 @@ p {
     font-size: 20px;
     padding: 20px;
     overflow-y: auto;
+}
+
+#tower-details > br {
+    display: none;
+}
+
+#tower-details > p {
+    line-height: 1.2;
+}
+
+#tower-details > .big {
+    margin: 0 !important;
+}
+
+#tower-details > #tower-name {
+    margin: 8px 0 35px !important;
+}
+
+#tower-details > .big:not(#tower-name) {
+    margin: 10px 0 6px !important;
 }
 
 .filters {

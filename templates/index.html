@@ -13,7 +13,13 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCLP Official</title>
+    <title>{{ meta.title }}</title>
+    <meta name="description" content="{{ meta.description }}">
+    <meta property="og:site_name" content="SCLP Official">
+    <meta property="og:title" content="{{ meta.title }}">
+    <meta property="og:description" content="{{ meta.description }}">
+    <meta property="og:image" content="{{ url_for('static', filename='images/sclp.png', _external=True) }}">
+    <meta name="twitter:card" content="summary">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons/css/flag-icons.min.css"/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat">
@@ -84,6 +90,7 @@
                         <p>Location: <span id="tower-location"></span></p>
                         <p class="small" id="tower-other-locations"></p>
                         <p>Rank: #<span id="tower-rank"></span></p>
+                        <p><span id="tower-creator"></span></p>
                         <p>XP for completion: <span id="tower-xp"></span></p>
                         <p>Victors: <span id="tower-victor-count"></span></p>
                         <p id="tower-quality"></p>
@@ -150,7 +157,7 @@
                         <h1>Packs</h1>
                         <div class="filter" id="packs-search"></div>
                         <div class="filter filter-right">
-                            {{ sort_box("pack", [("xp", "Bonus XP"), ("towers", "Tower Count"), ("hardest", "Hardest Tower"), ("quality", "Quality")]) }}
+                            {{ sort_box("pack", [("xp", "Bonus XP"), ("towers", "Tower Count"), ("hardest", "Hardest Tower"), ("progress", "Completion (%)"), ("quality", "Quality")]) }}
                         </div>
                     </div>
                     <div class="card" id="pack-details">
