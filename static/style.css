@@ -73,15 +73,19 @@ span {
     flex: 1;
     min-width: 0;
     padding: 8px 12px;
-    border: 1px solid #303540;
-    border-radius: 6px;
-    background: #252830;
+    border: 1px solid #606870;
+    border-radius: 10px;
+    background: #505a64;
     font: inherit;
 }
 
+.player-tower-tab:hover {
+    background: #5c6773;
+}
+
 .player-tower-tab.active {
-    background: #363840;
-    border-color: #505A64;
+    text-decoration: underline;
+    background: #5c6773;
 }
 
 .player-creation-filters {
@@ -230,14 +234,10 @@ p {
     width: 60px;
 }
 
-#packs-table td:last-child {
-    width: 90px;
-    white-space: nowrap;
-}
-
 .tower-link, .player-link, .pack-link, .tower-link-done, .pack-link-done {
     font-size: 20px;
     border-radius: 8px;
+    padding: 1px 0px;
     background: #00000000;
     border: none;
     text-align: left;
@@ -272,10 +272,6 @@ p {
 .tower-link-done, .pack-link-done {
     color: #FFFFFF20;
     text-decoration: line-through;
-}
-
-.pack-link, .pack-link-done {
-    padding: 0;
 }
 
 .player-link {
@@ -587,7 +583,8 @@ body.legal-page {
 }
 
 #player-stats {
-    width: 80%;
+    width: 100%;
+    table-layout: fixed;
 }
 
 #tower-victors, #pack-victors {
