@@ -8,14 +8,6 @@
         white-space: normal;
     }
 
-    #packs-table .pack-link, #packs-table .pack-link-done {
-        vertical-align: -2px;
-    }
-
-    #player-packs .pack-link, #player-packs .pack-link-done {
-        vertical-align: -1px;
-    }
-
     #player-towers td:first-child, #player-packs td:first-child, #player-creations td:first-child, #pack-towers td:first-child {
         width: 50px;
         font-size: 0.7em;
