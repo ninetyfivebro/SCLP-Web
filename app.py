@@ -1,7 +1,9 @@
 from flask import Flask, render_template, make_response, jsonify, request
 from dotenv import load_dotenv
 import os
+import json
 import math
+import hashlib
 import requests
 import pycountry
 import time
@@ -33,17 +35,24 @@ def get_data(r):
     return data
 
 diffs = [(900, "Insane"), (1000, "Extreme"), (1100, "Terrifying"), (1200, "Catastrophic"), (1300, "Horrific"), (1400, "Unreal"), (99999, "Nil")]
-player_sorts = [("xp", "Level/XP"), ("completions", "SCs Beaten"), ("packs", "Packs Completed"), ("hardest", "Hardest Tower"),] + [(f"most-{name.lower()}", f"{name} Towers") for limit, name in diffs[:6]]
+player_sorts = [("xp", "Level/XP"), ("completions", "SCs Beaten"), ("packs", "Packs Completed"), ("hardest", "Hardest Tower")] + [(f"most-{name.lower()}", f"{name} Towers") for limit, name in diffs[:6]]
 
 def diff_name(d):
     return next(name for limit, name in diffs if d < limit)
 
 @app.after_request
-def no_cache(response):
-    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
+def cache_headers(response):
+    if request.path.startswith("/static/") or request.path == "/favicon.ico":
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable" if "v" in request.args else "public, max-age=86400"
+    elif "Cache-Control" not in response.headers:
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     return response
+
+@app.context_processor
+def static_urls():
+    def static_v(name):
+        return f"/static/{name}?v={int(os.path.getmtime(os.path.join(app.static_folder, name)))}"
+    return {"static_v": static_v}
 
 @app.route("/favicon.ico")
 def favicon():
@@ -90,6 +99,8 @@ def parse_packs(raw, tower_by_id):
             packs.append({"id": pack["id"], "name": pack["name"], "towers": ids, "xp": final_xp})
     return sorted(packs, key=lambda p: p["xp"])
 
+tower_fields = ["id", "name", "difficulty", "rank", "xp", "places", "game", "creators", "quality", "time/length", "alternate name(s)", "previous name(s)"]
+
 def build():
     with ThreadPoolExecutor(max_workers=4) as pool:
         players, towers, games, countries = pool.map(get_data, ["comps!A:C", "towers!A:Q", "games!A:C", "nationalities!A:B"])
@@ -123,18 +134,13 @@ def build():
 
     victors_by_tower = {t["id"]: [] for t in towers}
     pack_victors = {p["id"]: [] for p in packs}
-    player_hardest = {}
-    diff_counts = {}
-    player_towers = {}
 
+    player_packs = {}
     for player in players:
         done = set(player["completions"])
-        bonus = sum(
-            pack["xp"]
-            for pack in packs
-            if pack["towers"] and done.issuperset(pack["towers"])
-        )
-        player["total_xp"] = player["xp"] + bonus
+        finished = [pack for pack in packs if pack["towers"] and done.issuperset(pack["towers"])]
+        player_packs[player["username"]] = finished
+        player["total_xp"] = player["xp"] + sum(pack["xp"] for pack in finished)
 
     players.sort(key=lambda p: p["total_xp"], reverse=True)
     for rank, player in enumerate(players, 1):
@@ -142,22 +148,21 @@ def build():
 
     for player in players:
         name = player["username"]
-        owned = [tower_by_id[tid] for tid in player["completions"] if tid in tower_by_id]
-        counts = {}
+        for tid in player["completions"]:
+            if tid in tower_by_id:
+                victors_by_tower[tid].append(name)
 
-        for tower in owned:
-            diff = diff_name(tower["difficulty"])
-            counts[diff] = counts.get(diff, 0) + 1
-            victors_by_tower[tower["id"]].append(name)
+        for pack in player_packs[name]:
+            pack_victors[pack["id"]].append(name)
 
-        player_hardest[name] = max((t["difficulty"] for t in owned), default=0)
-        diff_counts[name] = counts
-        player_towers[name] = [t["id"] for t in sorted(owned, key=lambda t: t["rank"])]
-
-        done = set(player["completions"])
-        for pack in packs:
-            if pack["towers"] and done.issuperset(pack["towers"]):
-                pack_victors[pack["id"]].append(name)
+    page = {
+        "players": players,
+        "towers": [{key: tower[key] for key in tower_fields if key in tower} for tower in towers],
+        "games": games,
+        "packs": packs,
+        "diff_totals": diff_totals,
+    }
+    script = "".join(f"{name}={json.dumps(value, separators=(',', ':'), ensure_ascii=False)};" for name, value in page.items())
 
     return {
         "players": players,
@@ -166,10 +171,8 @@ def build():
         "packs": packs,
         "victors_by_tower": victors_by_tower,
         "pack_victors": pack_victors,
-        "player_hardest": player_hardest,
-        "diff_counts": diff_counts,
-        "diff_totals": diff_totals,
-        "player_towers": player_towers,
+        "script": script,
+        "version": hashlib.md5(script.encode()).hexdigest()[:12],
     }
 
 for attempt in range(5):
@@ -205,22 +208,35 @@ def tower_data_csv():
     response.headers['Content-Disposition'] = 'attachment; filename=tower_data.csv'
     return response
 
-# rewrite below
-try:
-    cool_members = requests.get("http://127.0.0.1:8082/cool_members", timeout=5).json()
-except requests.exceptions.RequestException:
-    cool_members = []
-
-staff = get_data("credits!A:B")
+cool_members = []
+staff = []
 roles = {}
-for entry in staff:
-    roles.setdefault(entry["username"], entry["role"])
+role_colors = {}
+
+def load_bot_data():
+    global cool_members, staff, roles, role_colors
+    try:
+        cool_members = requests.get("http://127.0.0.1:8082/cool_members", timeout=5).json()
+        staff = requests.get("http://127.0.0.1:8082/staff", timeout=5).json()
+    except requests.exceptions.RequestException:
+        return
+    roles = {}
+    for group in staff:
+        for name in group["members"]:
+            roles.setdefault(name, group["name"])
+    role_colors = {group["name"]: group["color"] for group in staff}
+
+def refresh_bot_data():
+    while True:
+        load_bot_data()
+        time.sleep(300)
+
+threading.Thread(target=refresh_bot_data, daemon=True).start()
 
 scotw_points = get_data("scotwpoints!A:B")
 
 def player_identity(player):
     return str(player.get("userid") or player.get("username", "")).strip()
-
 
 def level_of(xp):
     level = 0
@@ -230,7 +246,6 @@ def level_of(xp):
         level += 1
         need = 150 + 25 * (level + 1) ** 2
     return level
-
 
 def page_meta():
     meta = {"title": "SCLP Official", "description": "Soul Crushing Leaderboard Project"}
@@ -244,7 +259,7 @@ def page_meta():
         player = next((
             p for p in data["players"]
             if str(p.get("username", "")).lower() == target
-            or str(player_identity(p)).lower() == target
+            or player_identity(p).lower() == target
         ), None)
     tower = next((t for t in data["towers"] if str(t["id"]) == tower_id), None) if tower_id else None
     pack = next((p for p in data["packs"] if p["id"] == pack_id), None) if pack_id else None
@@ -261,8 +276,15 @@ def page_meta():
 
 @app.route("/")
 def home():
-    js = {**data, "cool_members": cool_members, "staff": staff, "roles": roles, "scotw_points": scotw_points, "diffs": diffs}
-    return render_template("index.html", js=js, diffs=diffs, player_sorts=player_sorts, meta=page_meta())
+    js = {"cool_members": cool_members, "staff": staff, "roles": roles, "role_colors": role_colors, "scotw_points": scotw_points, "diffs": diffs}
+    return render_template("index.html", js=js, version=data["version"], diffs=diffs, player_sorts=player_sorts, meta=page_meta())
+
+@app.route("/data.js")
+def data_js():
+    response = make_response(data["script"])
+    response.headers["Content-Type"] = "application/javascript; charset=utf-8"
+    response.headers["Cache-Control"] = "public, max-age=31536000, immutable" if request.args.get("v") == data["version"] else "no-store"
+    return response
 
 @app.route("/privacy-policy")
 def privacy_policy():
@@ -282,11 +304,19 @@ def next_scotw(after):
         check += timedelta(days=7)
     return check.astimezone(timezone.utc)
 
+scotw_cache = {"time": 0, "value": None}
+
 @app.route("/get_scotw")
 def get_scotw():
-    scotw = get_data("scotw!A:B")[0]
-    start = datetime.fromtimestamp(int(scotw['Time']), tz=timezone.utc)
-    return jsonify({**scotw, "Target": int(next_scotw(start).timestamp())})
+    if time.time() - scotw_cache["time"] > 60:
+        try:
+            scotw = get_data("scotw!A:B")[0]
+            start = datetime.fromtimestamp(int(scotw['Time']), tz=timezone.utc)
+            scotw_cache.update(time=time.time(), value={**scotw, "Target": int(next_scotw(start).timestamp())})
+        except Exception:
+            if scotw_cache["value"] is None:
+                raise
+    return jsonify(scotw_cache["value"])
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=False, port=5003)

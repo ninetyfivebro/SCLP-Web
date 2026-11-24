@@ -1,10 +1,9 @@
 function player_identifier(player) {
-    if (!player) return "";
-    return String(player.userid ?? player.username ?? "").trim();
+    return String(player.userid || player.username || "").trim();
 }
 
 function find_player(name) {
-    if (name === null || name === undefined || name === "") return false;
+    if (name == null || name == "") return false;
     if (player_lookup[name]) return player_lookup[name];
     let lower = String(name).toLowerCase();
     for (let key in player_lookup) {
@@ -39,17 +38,12 @@ function title_case(str) {
     return str.replace(/\w\S*/g, text => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase());
 }
 
-function slug(role) {
-    return role.toLowerCase().replaceAll(" ", "-");
+function colored(text, color) {
+    return color ? `<span style="color: ${color}">${text}</span>` : text;
 }
 
-let credits = {};
-for (let {role, username} of staff) {
-    (credits[role] ||= []).push(username);
-}
-
-for (let [role, users] of Object.entries(credits)) {
-    $("#credits").append(`<h3><div class="${slug(role)}">[${title_case(role)}]</div>${users.join(", ")}</h3>`);
+for (let {name, color, members} of staff) {
+    if (members.length) $("#credits").append(`<h3><div>${colored(`[${name}]`, color)}</div>${members.join(", ")}</h3>`);
 }
 
 function format_num(num) {
@@ -117,7 +111,7 @@ document.querySelectorAll("input").forEach(input => {
 
 let pages = ["Home", "Towers", "Leaderboard", "Packs", "SCoTW"];
 for (let page of pages) {
-    $("#nav-links").append(`<button class="nav-link" onclick="open_page('${page}')" onmousedown="open_link_in_new_tab_on_middle_click(event, '/?page=${page.toLowerCase()}')">${page}</button>`);
+    $("#nav-links").append(`<button class="nav-link" onclick="open_page('${page}')" onmousedown="middle_click(event, '/?page=${page.toLowerCase()}')">${page}</button>`);
 }
 
 let current_page = "Home";
@@ -134,8 +128,8 @@ let search_slots = {
 };
 
 let search_filters = {
-    "Towers": () => filter_towers(),
-    "Leaderboard": () => filter_players(),
+    "Towers": () => render_towers(),
+    "Leaderboard": () => render_players(),
     "Packs": () => filter_packs(),
     "SCoTW": () => filter_scotw(),
 };
@@ -156,30 +150,13 @@ function current_url() {
     if (current_page == "Towers" && current_tower_id != null) {
         qs = `t=${current_tower_id}`;
     } else if (current_page == "Leaderboard" && current_player_name != null) {
-        qs = `u=${encodeURIComponent(current_player_id || current_player_name)}`;
+        qs = `u=${encodeURIComponent(current_player_id)}`;
     } else if (current_page == "Packs" && current_pack_id != null) {
         qs = `pk=${current_pack_id}`;
     } else if (current_page == "Home" || current_page == "SCoTW") {
         qs = `page=${current_page.toLowerCase()}`;
     }
     return qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
-}
-
-function resolve_player_key(value) {
-    if (value == null || value === "") return null;
-    let raw = String(value).trim();
-    if (!raw) return null;
-    let direct = find_player(raw);
-    if (direct) return direct.username;
-    let numeric = Number(raw);
-    if (!Number.isNaN(numeric)) {
-        let by_id = players.find(p => String(player_identifier(p)) === raw);
-        if (by_id) return by_id.username;
-    }
-    for (let p of players) {
-        if (String(p.username).toLowerCase() === raw.toLowerCase()) return p.username;
-    }
-    return raw;
 }
 
 let restoring = false;
@@ -195,7 +172,7 @@ function restore(fn) {
 function route(params) {
     let page_name = pages.find(p => p.toLowerCase() == (params.get("page") || "").toLowerCase());
     if (params.get("t")) open_tower(parseInt(params.get("t")));
-    else if (params.get("u")) open_player(resolve_player_key(params.get("u")) || params.get("u"));
+    else if (params.get("u")) open_player(params.get("u"));
     else if (params.get("pk")) open_pack(params.get("pk"));
     else if (page_name) open_page(page_name);
     else return false;
